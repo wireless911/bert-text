@@ -7,6 +7,7 @@ bert-dense
 ```
 这里的文本分类主要是多分类，如果是二分类任务可以自己替换损失函数
 ``` 
+[transformers](https://huggingface.co/transformers/)
 
 
 #### 序列标注
