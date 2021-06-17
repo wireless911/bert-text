@@ -20,11 +20,8 @@ eval_datasets = CustomTextClassifizerDataset(config.eval_data)
 train_dataloader = DataLoader(train_datasets, batch_size=config.batch_size, shuffle=True)
 eval_dataloader = DataLoader(eval_datasets, batch_size=config.batch_size, shuffle=True)
 
-# num class
-num_class = train_datasets.num_classes
-
 # create model
-model = TextClassificationModel(config.max_sequence_length, num_class)
+model = TextClassificationModel(config.max_sequence_length, config.num_classes)
 # create trainer
 trainer = TextClassifizerTrainer(
     model=model,

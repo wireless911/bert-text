@@ -12,8 +12,8 @@ from model import BiLSTM_CRF
 config = SequenceLabelConfig()
 tag_to_ix = SequenceLabelConfig.TAG_TO_ID
 
-train_datasets = CustomSequenceLabelDataset("data/squence-label/train.csv", config)
-eval_datasets = CustomSequenceLabelDataset("data/squence-label/dev.csv", config)
+train_datasets = CustomSequenceLabelDataset(config.train_data, config)
+eval_datasets = CustomSequenceLabelDataset(config.eval_data, config)
 
 # create model
 model = BiLSTM_CRF(tag_to_ix, config.max_sequence_length, config.hidden_dim)

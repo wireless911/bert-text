@@ -8,15 +8,17 @@ class TextClassifizerConfig(object):
 
     def __init__(
             self,
+            num_classes: int = 3,
             batch_size: int = 256,
             learning_rate: float = 2e-5,
             epochs: int = 20,
             max_sequence_length: int = 100,
-            eval_data: Text = "data/text-classifizer/train.csv",
-            train_data: Text = "data/text-classifizer/dev.csv",
+            train_data: Text = "data/text-classifizer/train.csv",
+            eval_data: Text = "data/text-classifizer/dev.csv"
     ):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using {} device'.format(self.device))
+        self.num_classes = num_classes
         self.train_data = train_data
         self.eval_data = eval_data
         self.batch_size = batch_size
@@ -55,8 +57,8 @@ class SequenceLabelConfig(object):
             epochs: int = 50,
             max_sequence_length=MAX_LENGTH,
             hidden_dim=50,
-            eval_data: Text = "data/text-classifizer/train.csv",
-            train_data: Text = "data/text-classifizer/dev.csv"
+            train_data: Text = "data/squence-label/train.csv",
+            eval_data: Text = "data/squence-label/dev.csv"
 
     ):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -68,4 +70,3 @@ class SequenceLabelConfig(object):
         self.epochs = epochs
         self.max_sequence_length = max_sequence_length
         self.hidden_dim = hidden_dim
-
