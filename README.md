@@ -7,16 +7,15 @@ bert-dense
 ```
 这里的文本分类主要是多分类，如果是二分类任务可以自己替换损失函数
 ``` 
-[transformers](https://huggingface.co/transformers/)
 
 
 #### 序列标注
 bert-bilstm-crf 序列标注任务
-```
+
 pytorch 微调 bert 模型 应用于下游分类、序列标注任务，
 bert模块使用的是hugging face 发布的第三方库[transformers](https://huggingface.co/transformers/)   
 crf模块参考了[pytorch-crf](https://pytorch-crf.readthedocs.io/en/stable/)的内容，做了部分修改，方便计算准确率
-```
+
 
 ##### 环境配置
 ```
