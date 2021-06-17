@@ -1,4 +1,4 @@
-# bert文本多分类(情感分析)、bert-bilstm-crf序列标注任务(快递地址的序列标注任务) 
+# bert文本多分类、bert-bilstm-crf序列标注任务
 基于BERT的中文情感分类任务
 基于BERT、LSTM、CRF 的中文序列标注任务
 
