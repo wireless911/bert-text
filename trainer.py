@@ -32,7 +32,8 @@ class TextClassifizerTrainer(Trainer):
             train_dataloader: DataLoader = None,
             eval_dataloader: DataLoader = None,
             epochs: Optional[int] = 30,
-            learning_rate: Optional[float] = 1e-5
+            learning_rate: Optional[float] = 1e-5,
+            device: Optional[Text] = "cpu"
     ):
         self.writer = SummaryWriter(
             f'logs/text-classifier-B-{train_dataloader.batch_size}-E{epochs}-L{learning_rate}-{time.time()}')
@@ -46,6 +47,8 @@ class TextClassifizerTrainer(Trainer):
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
         self.args = args
+        self.device = device
+        self.model.to(device)
 
     def train(self):
         loss_fn = torch.nn.CrossEntropyLoss()
@@ -63,17 +66,21 @@ class TextClassifizerTrainer(Trainer):
                           time.time() - epoch_start_time,
                           accu_val, loss))
             print('-' * 59)
+            self.save(model=self.model, optimizer=optimizer, epoch=epoch)
 
     def train_loop(self, epoch, loss_fn, optimizer):
         self.model.train()
         total_acc, total_count = 0, 0
 
         for batch, data in enumerate(self.train_dataloader):
-            y = data["labels"]
-            X = data["text"]
+            y = data["labels"].to(self.device)
+            token = data["token"]
+            input_ids = token["input_ids"].squeeze(1).to(self.device)
+            attention_mask = token["attention_mask"].squeeze(1).to(self.device)
+            token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
             # Compute prediction and loss
-            pred = self.model(X)
+            pred = self.model(input_ids, attention_mask, token_type_ids)
             loss = loss_fn(pred, y)
 
             # Backpropagation
@@ -83,7 +90,7 @@ class TextClassifizerTrainer(Trainer):
 
             current_acc = (pred.argmax(1) == y).sum().item()
             current_count = y.size(0)
-            loss, current = loss.item(), batch * len(X)
+            loss, current = loss.item(), batch * len(token)
 
             total_acc += current_acc
             total_count += current_count
@@ -113,12 +120,15 @@ class TextClassifizerTrainer(Trainer):
 
         with torch.no_grad():
             for batch, data in enumerate(self.eval_dataloader):
-                y = data["labels"]
-                X = data["text"]
+                y = data["labels"].to(self.device)
+                token = data["token"]
+                input_ids = token["input_ids"].squeeze(1).to(self.device)
+                attention_mask = token["attention_mask"].squeeze(1).to(self.device)
+                token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
-                pred = self.model(X)
-                loss = loss_fn(pred, y)
-                loss, current = loss.item(), batch * len(X)
+                # Compute prediction and loss
+                pred = self.model(input_ids, attention_mask, token_type_ids)
+                loss, current = loss.item(), batch * len(token)
                 current_acc = (pred.argmax(1) == y).sum().item()
                 current_count = y.size(0)
 
@@ -148,7 +158,8 @@ class SequenceLabelTrainer(Trainer):
             train_dataloader: DataLoader = None,
             eval_dataloader: DataLoader = None,
             epochs: Optional[int] = 30,
-            learning_rate: Optional[float] = 1e-5
+            learning_rate: Optional[float] = 1e-5,
+            device: Optional[Text] = "cpu"
     ):
         self.writer = SummaryWriter(
             f'logs/sequence-label-B-{train_dataloader.batch_size}-E{epochs}-L{learning_rate}-{time.time()}')
@@ -162,6 +173,7 @@ class SequenceLabelTrainer(Trainer):
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
         self.args = args
+        self.device = device
 
     def train(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate, weight_decay=0.1)
@@ -183,11 +195,15 @@ class SequenceLabelTrainer(Trainer):
     def train_loop(self, epoch, optimizer):
         self.model.train()
         for batch, data in enumerate(self.train_dataloader):
-            y = data["labels"]
-            X = data["text"]
-            y_pred, padding_count = self.model(X)
+            y = data["labels"].to(self.device)
+            token = data["token"]
+            input_ids = token["input_ids"].squeeze(1).to(self.device)
+            attention_mask = token["attention_mask"].squeeze(1).to(self.device)
+            token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
-            loss = self.model.loss(X, y)
+            # Compute prediction and loss
+            y_pred, padding_count = self.model(input_ids, attention_mask, token_type_ids)
+            loss = self.model.loss(input_ids, attention_mask, token_type_ids, y)
 
             # Backpropagation
             optimizer.zero_grad()
@@ -224,12 +240,15 @@ class SequenceLabelTrainer(Trainer):
 
         with torch.no_grad():
             for batch, data in enumerate(self.eval_dataloader):
-                y = data["labels"]
-                X = data["text"]
+                y = data["labels"].to(self.device)
+                token = data["token"]
+                input_ids = token["input_ids"].squeeze(1).to(self.device)
+                attention_mask = token["attention_mask"].squeeze(1).to(self.device)
+                token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
-                y_pred, padding_count = self.model(X)
-
-                loss = self.model.loss(X, y)
+                # Compute prediction and loss
+                y_pred, padding_count = self.model(input_ids, attention_mask, token_type_ids)
+                loss = self.model.loss(input_ids, attention_mask, token_type_ids, y)
                 current_acc = (y_pred == y).sum().item() - padding_count
                 current = y.size(0) * y.size(1) - padding_count
 

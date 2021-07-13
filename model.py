@@ -3,6 +3,7 @@ import math
 import torch
 from typing import Optional, Text, List, Tuple
 
+from torch import Tensor
 from torch.autograd import Variable
 from transformers import BertTokenizer, BertModel
 from config import SequenceLabelConfig
@@ -16,24 +17,16 @@ class TextClassificationModel(torch.nn.Module):
         self.max_length = max_length
         self.num_class = num_class
         self.bert_dim = 768
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
         self.bert = BertModel.from_pretrained('bert-base-chinese')
         self.classifizer = torch.nn.Linear(self.bert_dim, num_class)
 
-    def embeding(self, text):
-        token = self.tokenizer(text, return_tensors='pt', padding="max_length", max_length=self.max_length,
-                               truncation=True)
-        # token = torch.tensor(token["input_ids"], dtype=torch.float32)
-        return token
-
-    def forward(self, text):
-        token = self.embeding(text)
+    def forward(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
+                token_type_ids: Optional[Tensor]) -> Tensor:
         outputs = self.bert(
-            token["input_ids"],
-            attention_mask=token["attention_mask"],
-            token_type_ids=token["token_type_ids"]
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids
         )
-
         return self.classifizer(outputs.pooler_output)
 
     def summuary(self):
@@ -388,47 +381,42 @@ class BiLSTM_CRF(torch.nn.Module):
         # Maps the output of the LSTM into tag space.
         self.hidden2tag = torch.nn.Linear(hidden_dim, self.tagset_size)
 
-    def embeding(self, sentence):
-        """hugging face bert"""
-        token = self.tokenizer(sentence, return_tensors='pt', padding="max_length", max_length=self.max_length,
-                               truncation=True)
-
-        outputs = self.bert(
-            token["input_ids"],
-            attention_mask=token["attention_mask"],
-            token_type_ids=token["token_type_ids"]
-        )
-        embedding = outputs.last_hidden_state
-        mask = token["attention_mask"]
-        return embedding, mask
-
     def init_hidden(self, batch_size):
         return (torch.randn(2, batch_size, self.hidden_dim // 2),
                 torch.randn(2, batch_size, self.hidden_dim // 2))
 
-    def _get_lstm_features(self, sentence):
+    def _get_lstm_features(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
+                           token_type_ids: Optional[Tensor]):
         # Get the emission scores from the BiLSTM
-        embedding, mask = self.embeding(sentence)
+        outputs = self.bert(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids
+        )
+        embedding = outputs.last_hidden_state
+
         batch_size, sequece_length, embedding_dim = embedding.shape
         self.hidden = self.init_hidden(batch_size)
         lstm_out, self.hidden = self.lstm(embedding, self.hidden)
         lstm_feats = self.hidden2tag(lstm_out)
-        return lstm_feats, mask.byte()
+        return lstm_feats, attention_mask.byte()
 
-    def forward(self, sentence):  # dont confuse this with _forward_alg above.
-        lstm_feats, mask = self._get_lstm_features(sentence)
+    def forward(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
+                token_type_ids: Optional[Tensor]):  # dont confuse this with _forward_alg above.
+        lstm_feats, mask = self._get_lstm_features(input_ids, attention_mask, token_type_ids)
         # Find the best path, given the features.
         tag_seq, padding_count = self.crf(lstm_feats, mask=mask)
         return torch.tensor(tag_seq), padding_count
 
-    def loss(self, sentence, tags):
+    def loss(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
+             token_type_ids: Optional[Tensor], tags: Optional[Tensor]):
         """
         feats: size=(batch_size, seq_len, tag_size)
             mask: size=(batch_size, seq_len)
             tags: size=(batch_size, seq_len)
         :return:
         """
-        lstm_feats, mask = self._get_lstm_features(sentence)
+        lstm_feats, mask = self._get_lstm_features(input_ids,attention_mask,token_type_ids)
         loss_value = self.crf.neg_log_likelihood_loss(lstm_feats, tags, mask=mask)
         batch_size = lstm_feats.size(0)
         loss_value /= float(batch_size)

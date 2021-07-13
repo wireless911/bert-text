@@ -18,6 +18,8 @@ class TextClassifizerConfig(object):
     ):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using {} device'.format(self.device))
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         self.num_classes = num_classes
         self.train_data = train_data
         self.eval_data = eval_data
@@ -63,6 +65,8 @@ class SequenceLabelConfig(object):
     ):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using {} device'.format(self.device))
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         self.train_data = train_data
         self.eval_data = eval_data
         self.batch_size = batch_size

@@ -2,19 +2,21 @@ import time
 import torch
 from typing import Optional, Text
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 from transformers import BertTokenizer
 from utils import CustomTextClassifizerDataset
-from train import TextClassifizerTrainer
+from trainer import TextClassifizerTrainer
 from model import TextClassificationModel
 from config import TextClassifizerConfig
 
 # load config from object
 config = TextClassifizerConfig()
 
+# tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
+
 # load dataset
-train_datasets = CustomTextClassifizerDataset(config.train_data)
-eval_datasets = CustomTextClassifizerDataset(config.eval_data)
+train_datasets = CustomTextClassifizerDataset(config.train_data, tokenizer, config.max_sequence_length)
+eval_datasets = CustomTextClassifizerDataset(config.eval_data, tokenizer, config.max_sequence_length)
 
 # dataloader
 train_dataloader = DataLoader(train_datasets, batch_size=config.batch_size, shuffle=True)

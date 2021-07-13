@@ -4,16 +4,20 @@ import torch
 from typing import Optional, Text
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from train import SequenceLabelTrainer
+from transformers import BertTokenizer
+
+from trainer import SequenceLabelTrainer
 from config import SequenceLabelConfig
 from utils import CustomSequenceLabelDataset
 from model import BiLSTM_CRF
 
 config = SequenceLabelConfig()
 tag_to_ix = SequenceLabelConfig.TAG_TO_ID
+# tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 
-train_datasets = CustomSequenceLabelDataset(config.train_data, config)
-eval_datasets = CustomSequenceLabelDataset(config.eval_data, config)
+train_datasets = CustomSequenceLabelDataset(config.train_data, tokenizer, config)
+eval_datasets = CustomSequenceLabelDataset(config.eval_data, tokenizer, config)
 
 # create model
 model = BiLSTM_CRF(tag_to_ix, config.max_sequence_length, config.hidden_dim)
