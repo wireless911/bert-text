@@ -354,13 +354,11 @@ class CRF(torch.nn.Module):
             best_tags.reverse()
             best_tags_list.append(best_tags)
 
-        padding_count = 0
         for idx, best_tags in enumerate(best_tags_list):
             padding_length = self.max_length - len(best_tags)
             best_tags.extend([self.tag_to_ix[SequenceLabelConfig.PAD_TAG]] * padding_length)
-            padding_count += padding_length
 
-        return (best_tags_list, padding_count)
+        return best_tags_list
 
 
 class BiLSTM_CRF(torch.nn.Module):
@@ -409,8 +407,8 @@ class BiLSTM_CRF(torch.nn.Module):
                 token_type_ids: Optional[Tensor]):  # dont confuse this with _forward_alg above.
         lstm_feats, mask = self._get_lstm_features(input_ids, attention_mask, token_type_ids)
         # Find the best path, given the features.
-        tag_seq, padding_count = self.crf(lstm_feats, mask=mask)
-        return torch.tensor(tag_seq), padding_count
+        tag_seq = self.crf(lstm_feats, mask=mask)
+        return torch.tensor(tag_seq).to(self.device)
 
     def loss(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
              token_type_ids: Optional[Tensor], tags: Optional[Tensor]):

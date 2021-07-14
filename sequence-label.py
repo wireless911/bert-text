@@ -37,7 +37,8 @@ trainer = SequenceLabelTrainer(
     eval_dataloader=eval_dataloader,
     epochs=config.epochs,
     learning_rate=config.learning_rate,
-    device=config.device
+    device=config.device,
+    padding_tag=config.TAG_TO_ID[config.PAD_TAG]
 )
 
 # train model

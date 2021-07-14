@@ -160,7 +160,8 @@ class SequenceLabelTrainer(Trainer):
             eval_dataloader: DataLoader = None,
             epochs: Optional[int] = 30,
             learning_rate: Optional[float] = 1e-5,
-            device: Optional[Text] = "cpu"
+            device: Optional[Text] = "cpu",
+            padding_tag:Optional[int]=0
     ):
         self.writer = SummaryWriter(
             f'logs/sequence-label-B-{train_dataloader.batch_size}-E{epochs}-L{learning_rate}-{time.time()}')
@@ -176,6 +177,7 @@ class SequenceLabelTrainer(Trainer):
         self.args = args
         self.device = device
         self.model.to(self.device)
+        self.padding_tag = padding_tag
 
     def train(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate, weight_decay=0.1)
@@ -204,14 +206,14 @@ class SequenceLabelTrainer(Trainer):
             token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
             # Compute prediction and loss
-            y_pred, padding_count = self.model(input_ids, attention_mask, token_type_ids)
+            y_pred = self.model(input_ids, attention_mask, token_type_ids)
             loss = self.model.loss(input_ids, attention_mask, token_type_ids, y)
 
             # Backpropagation
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
+            padding_count = (y_pred == self.padding_tag).sum()
             current_acc = (y_pred == y).sum().item() - padding_count
             current = y.size(0) * y.size(1) - padding_count
 
