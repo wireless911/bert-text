@@ -251,8 +251,9 @@ class SequenceLabelTrainer(Trainer):
                 token_type_ids = token["token_type_ids"].squeeze(1).to(self.device)
 
                 # Compute prediction and loss
-                y_pred, padding_count = self.model(input_ids, attention_mask, token_type_ids)
+                y_pred = self.model(input_ids, attention_mask, token_type_ids)
                 loss = self.model.loss(input_ids, attention_mask, token_type_ids, y)
+                padding_count = (y_pred == self.padding_tag).sum()
                 current_acc = (y_pred == y).sum().item() - padding_count
                 current = y.size(0) * y.size(1) - padding_count
 
