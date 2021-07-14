@@ -20,7 +20,7 @@ train_datasets = CustomSequenceLabelDataset(config.train_data, tokenizer, config
 eval_datasets = CustomSequenceLabelDataset(config.eval_data, tokenizer, config)
 
 # create model
-model = BiLSTM_CRF(tag_to_ix, config.max_sequence_length, config.hidden_dim)
+model = BiLSTM_CRF(tag_to_ix, config.max_sequence_length, config.hidden_dim,config.device)
 model.summuary()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate, weight_decay=0.1)
@@ -36,7 +36,8 @@ trainer = SequenceLabelTrainer(
     train_dataloader=train_dataloader,
     eval_dataloader=eval_dataloader,
     epochs=config.epochs,
-    learning_rate=config.learning_rate
+    learning_rate=config.learning_rate,
+    device=config.device
 )
 
 # train model

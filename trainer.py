@@ -128,6 +128,7 @@ class TextClassifizerTrainer(Trainer):
 
                 # Compute prediction and loss
                 pred = self.model(input_ids, attention_mask, token_type_ids)
+                loss = loss_fn(pred, y)
                 loss, current = loss.item(), batch * len(token)
                 current_acc = (pred.argmax(1) == y).sum().item()
                 current_count = y.size(0)
@@ -174,6 +175,7 @@ class SequenceLabelTrainer(Trainer):
         self.eval_dataloader = eval_dataloader
         self.args = args
         self.device = device
+        self.model.to(self.device)
 
     def train(self):
         optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate, weight_decay=0.1)

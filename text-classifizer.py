@@ -31,7 +31,9 @@ trainer = TextClassifizerTrainer(
     train_dataloader=train_dataloader,
     eval_dataloader=eval_dataloader,
     epochs=config.epochs,
-    learning_rate=config.learning_rate
+    learning_rate=config.learning_rate,
+    device=config.device
+
 )
 
 # train model

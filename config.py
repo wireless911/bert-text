@@ -9,8 +9,8 @@ class TextClassifizerConfig(object):
     def __init__(
             self,
             num_classes: int = 3,
-            batch_size: int = 256,
-            learning_rate: float = 2e-5,
+            batch_size: int = 32,
+            learning_rate: float = 1e-6,
             epochs: int = 20,
             max_sequence_length: int = 100,
             train_data: Text = "data/text-classifizer/train.csv",

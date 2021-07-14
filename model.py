@@ -59,7 +59,8 @@ class CRF(torch.nn.Module):
     .. _Viterbi algorithm: https://en.wikipedia.org/wiki/Viterbi_algorithm
     """
 
-    def __init__(self, num_tags: int, tag_to_ix: dict, max_length: int = 100, batch_first: bool = False) -> None:
+    def __init__(self, num_tags: int, tag_to_ix: dict, max_length: int = 100, batch_first: bool = False,
+                 device: Text = "cpu") -> None:
         if num_tags <= 0:
             raise ValueError(f'invalid number of tags: {num_tags}')
         super().__init__()
@@ -67,9 +68,10 @@ class CRF(torch.nn.Module):
         self.tag_to_ix = tag_to_ix
         self.max_length = max_length
         self.batch_first = batch_first
-        self.start_transitions = torch.nn.Parameter(torch.empty(num_tags))
-        self.end_transitions = torch.nn.Parameter(torch.empty(num_tags))
-        self.transitions = torch.nn.Parameter(torch.empty(num_tags, num_tags))
+        self.start_transitions = torch.nn.Parameter(torch.empty(num_tags).to(device))
+        self.end_transitions = torch.nn.Parameter(torch.empty(num_tags).to(device))
+        self.transitions = torch.nn.Parameter(torch.empty(num_tags, num_tags).to(device))
+        self.device = device
 
         self.reset_parameters()
 
@@ -364,7 +366,7 @@ class CRF(torch.nn.Module):
 class BiLSTM_CRF(torch.nn.Module):
     """bilstm crf model"""
 
-    def __init__(self, tag_to_ix, max_length, hidden_dim):
+    def __init__(self, tag_to_ix, max_length, hidden_dim, device):
         super(BiLSTM_CRF, self).__init__()
         self.embedding_dim = 768
         self.max_length = max_length
@@ -376,14 +378,16 @@ class BiLSTM_CRF(torch.nn.Module):
         self.lstm = torch.nn.LSTM(self.embedding_dim, hidden_dim // 2,
                                   num_layers=1, bidirectional=True, batch_first=True)
         # self.crf = CRF(self.tagset_size, tag_to_ix)
-        self.crf = CRF(self.tagset_size, self.tag_to_ix, max_length=self.max_length, batch_first=True)
+        self.crf = CRF(self.tagset_size, self.tag_to_ix, max_length=self.max_length, batch_first=True, device=device)
 
         # Maps the output of the LSTM into tag space.
         self.hidden2tag = torch.nn.Linear(hidden_dim, self.tagset_size)
 
+        self.device = device
+
     def init_hidden(self, batch_size):
-        return (torch.randn(2, batch_size, self.hidden_dim // 2),
-                torch.randn(2, batch_size, self.hidden_dim // 2))
+        return (torch.randn(2, batch_size, self.hidden_dim // 2).to(self.device),
+                torch.randn(2, batch_size, self.hidden_dim // 2).to(self.device))
 
     def _get_lstm_features(self, input_ids: Optional[Tensor], attention_mask: Optional[Tensor],
                            token_type_ids: Optional[Tensor]):
@@ -416,7 +420,7 @@ class BiLSTM_CRF(torch.nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
-        lstm_feats, mask = self._get_lstm_features(input_ids,attention_mask,token_type_ids)
+        lstm_feats, mask = self._get_lstm_features(input_ids, attention_mask, token_type_ids)
         loss_value = self.crf.neg_log_likelihood_loss(lstm_feats, tags, mask=mask)
         batch_size = lstm_feats.size(0)
         loss_value /= float(batch_size)
