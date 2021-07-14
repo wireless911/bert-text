@@ -1,6 +1,6 @@
-# 文本多分类、序列标注任务 
+# bert文本多分类、bert-bilstm-crf序列标注任务
 基于BERT的中文情感分类任务
-基于BERT、LSTM、CRF 的中文序列标注任务(我做的是快递地址的序列标注任务)
+基于BERT、LSTM、CRF 的中文序列标注任务
 
 #### 文本分类
 bert-dense
@@ -11,11 +11,11 @@ bert-dense
 
 #### 序列标注
 bert-bilstm-crf 序列标注任务
-```
+
 pytorch 微调 bert 模型 应用于下游分类、序列标注任务，
 bert模块使用的是hugging face 发布的第三方库[transformers](https://huggingface.co/transformers/)   
 crf模块参考了[pytorch-crf](https://pytorch-crf.readthedocs.io/en/stable/)的内容，做了部分修改，方便计算准确率
-```
+
 
 ##### 环境配置
 ```
