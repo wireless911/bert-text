@@ -30,7 +30,7 @@ import re
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 config = SequenceLabelConfig()
 tag_to_ix = SequenceLabelConfig.TAG_TO_ID
-model = BiLSTM_CRF(tag_to_ix, config.max_sequence_length, config.hidden_dim,config.device)
+model = BiLSTM_CRF(tag_to_ix, config.max_length, config.hidden_dim,config.device)
 model.summuary()
 model.to(config.device)
 #
@@ -45,7 +45,7 @@ model.eval()
 #     label = dataframe["label"]
 #     for idx, text in enumerate(text_list):
 #         pred, padding_count = model(text)
-#         res = [ix_to_tag[x] for x in pred.squeeze(0).tolist()[:config.max_sequence_length - padding_count]]
+#         res = [ix_to_tag[x] for x in pred.squeeze(0).tolist()[:config.max_length - padding_count]]
 #         text = text.split(" ")
 #         print([f"{a}/{b}" for a, b in zip(text, res)])
 
@@ -55,7 +55,7 @@ def predict(text:Optional[Text]):
         curr_text = curr_text.replace(" ","")
         text_list = [x for x in curr_text]
         text = " ".join(text_list)
-        token = tokenizer(text, return_tensors='pt', padding="max_length", max_length=config.max_sequence_length,
+        token = tokenizer(text, return_tensors='pt', padding="max_length", max_length=config.max_length,
                                truncation=True)
         input_ids = token["input_ids"].squeeze(1).to(config.device)
         attention_mask = token["attention_mask"].squeeze(1).to(config.device)
