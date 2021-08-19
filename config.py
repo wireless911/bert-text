@@ -1,4 +1,4 @@
-from typing import Text, Dict
+from typing import Text, Dict, Optional
 
 import torch
 
@@ -32,17 +32,17 @@ class TextClassifizerConfig(object):
 class SequenceLabelConfig(object):
     """Configuration for `SequenceLabelConfig`."""
     PAD_TAG = "[PAD]"
-    MAX_LENGTH = 300
+    MAX_LENGTH = 250
     TAG_TO_ID = {
         PAD_TAG: 0,
         "B-person": 1,
         "I-person": 2,
         "B-mobile": 3,
         "I-mobile": 4,
-        "B-province": 5,
-        "I-province": 6,
-        "B-city": 7,
-        "I-city": 8,
+        "B-provin": 5,
+        "I-provin": 6,
+        "B-cities": 7,
+        "I-cities": 8,
         "B-county": 9,
         "I-county": 10,
         "B-street": 11,
@@ -54,13 +54,16 @@ class SequenceLabelConfig(object):
 
     def __init__(
             self,
-            batch_size: int = 32,
-            learning_rate: float = 1e-5,
+            batch_size: int = 8,
+            learning_rate: float = 5e-6,
             epochs: int = 50,
-            max_sequence_length=MAX_LENGTH,
+            max_length=MAX_LENGTH,
             hidden_dim=50,
             train_data: Text = "data/squence-label/train.csv",
-            eval_data: Text = "data/squence-label/dev.csv"
+            eval_data: Text = "data/squence-label/dev.csv",
+            albert_vocab_file: Optional[Text] = "albert_base_zh/vocab_chinese.txt",
+            albert_hidden_size: Optional[int] = 768,
+            albert_pytorch_model_path: Optional[Text] = "models"
 
     ):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -72,5 +75,9 @@ class SequenceLabelConfig(object):
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.epochs = epochs
-        self.max_sequence_length = max_sequence_length
+        self.max_length = max_length
         self.hidden_dim = hidden_dim
+        self.albert_vocab_file = albert_vocab_file
+        self.albert_hidden_size = albert_hidden_size
+        self.albert_pytorch_model_path = albert_pytorch_model_path
+        self.tag_to_id = self.TAG_TO_ID
