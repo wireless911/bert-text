@@ -40,7 +40,7 @@ class CustomSequenceLabelDataset(Dataset):
     def __init__(self, filepath, tokenizer, config: SequenceLabelConfig):
         self.dataframe = pd.read_csv(filepath)
         self.text_dir = filepath
-        self.max_length = config.max_sequence_length
+        self.max_length = config.max_length
         self.tag2idx = config.TAG_TO_ID
         self.pad_tag = config.PAD_TAG
         self.tokenizer = tokenizer
